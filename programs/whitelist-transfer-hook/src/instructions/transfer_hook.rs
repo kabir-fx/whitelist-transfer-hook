@@ -4,24 +4,20 @@ use anchor_lang::prelude::*;
 use anchor_spl::{
     token_2022::spl_token_2022::{
         extension::{
-            transfer_hook::TransferHookAccount, 
-            BaseStateWithExtensionsMut, 
-            PodStateWithExtensionsMut
-        }, 
-        pod::PodAccount
-    }, 
-    token_interface::{
-        Mint, 
-        TokenAccount
-    }
+            transfer_hook::TransferHookAccount, BaseStateWithExtensionsMut,
+            PodStateWithExtensionsMut,
+        },
+        pod::PodAccount,
+    },
+    token_interface::{Mint, TokenAccount},
 };
 
-use crate::state::Whitelist;
+use crate::state::{Whitelist, WhitelistEntry};
 
 #[derive(Accounts)]
 pub struct TransferHook<'info> {
     #[account(
-        token::mint = mint, 
+        token::mint = mint,
         token::authority = owner,
     )]
     pub source_token: InterfaceAccount<'info, TokenAccount>,
@@ -43,23 +39,26 @@ pub struct TransferHook<'info> {
         bump = whitelist.bump,
     )]
     pub whitelist: Account<'info, Whitelist>,
+
+    #[account(
+        // Here each owner must be whitelisted in order to make a transfer
+        seeds = [b"whitelist", owner.key().as_ref()],
+        bump = whitelist_entry.bump,
+    )]
+    pub whitelist_entry: Account<'info, WhitelistEntry>,
 }
 
 impl<'info> TransferHook<'info> {
     /// This function is called when the transfer hook is executed.
     pub fn transfer_hook(&mut self, _amount: u64) -> Result<()> {
         // Fail this instruction if it is not called from within a transfer hook
-        
+
         self.check_is_transferring()?;
 
         msg!("Source token owner: {}", self.source_token.owner);
         msg!("Destination token owner: {}", self.destination_token.owner);
 
-        if self.whitelist.address.contains(&self.source_token.owner) {
-            msg!("Transfer allowed: The address is whitelisted");
-        } else {
-            panic!("TransferHook: Address is not whitelisted");
-        }
+        msg!("Transfer allowed: The address is whitelisted");
 
         Ok(())
     }
@@ -81,12 +80,12 @@ impl<'info> TransferHook<'info> {
         // Search for the TransferHookAccount extension in the token account
         // The returning struct has a `transferring` field that indicates if the account is in the middle of a transfer operation
         let account_extension = account.get_extension_mut::<TransferHookAccount>()?;
-    
+
         // Check if the account is in the middle of a transfer operation
         if !bool::from(account_extension.transferring) {
             panic!("TransferHook: Not transferring");
         }
-    
+
         Ok(())
     }
 }

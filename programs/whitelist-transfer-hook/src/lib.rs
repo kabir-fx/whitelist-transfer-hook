@@ -9,13 +9,10 @@ mod state;
 use instructions::*;
 
 use spl_discriminator::SplDiscriminate;
-use spl_transfer_hook_interface::{
-    instruction::{
-        ExecuteInstruction, 
-        InitializeExtraAccountMetaListInstruction
-    },
-};
 use spl_tlv_account_resolution::state::ExtraAccountMetaList;
+use spl_transfer_hook_interface::instruction::{
+    ExecuteInstruction, InitializeExtraAccountMetaListInstruction,
+};
 
 declare_id!("DhzyDgCmmQzVC4vEcj2zRGUyN8Mt5JynfdGLKkBcRGaX");
 
@@ -27,16 +24,15 @@ pub mod whitelist_transfer_hook {
         ctx.accounts.initialize_whitelist(ctx.bumps)
     }
 
-    pub fn add_to_whitelist(ctx: Context<WhitelistOperations>, user: Pubkey) -> Result<()> {
-        ctx.accounts.add_to_whitelist(user)
+    pub fn add_to_whitelist(ctx: Context<AddToWhitelist>, user: Pubkey) -> Result<()> {
+        ctx.accounts.add_to_whitelist(user, ctx.bumps)
     }
 
-    pub fn remove_from_whitelist(ctx: Context<WhitelistOperations>, user: Pubkey) -> Result<()> {
+    pub fn remove_from_whitelist(ctx: Context<RemoveFromWhitelist>, user: Pubkey) -> Result<()> {
         ctx.accounts.remove_from_whitelist(user)
     }
 
     pub fn initialize_transfer_hook(ctx: Context<InitializeExtraAccountMetaList>) -> Result<()> {
-
         msg!("Initializing Transfer Hook...");
 
         // Get the extra account metas for the transfer hook
@@ -48,8 +44,9 @@ pub mod whitelist_transfer_hook {
         // initialize ExtraAccountMetaList account with extra accounts
         ExtraAccountMetaList::init::<ExecuteInstruction>(
             &mut ctx.accounts.extra_account_meta_list.try_borrow_mut_data()?,
-            &extra_account_metas
-        ).unwrap();
+            &extra_account_metas,
+        )
+        .unwrap();
 
         Ok(())
     }
