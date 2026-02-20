@@ -71,6 +71,13 @@ describe("whitelist-transfer-hook", () => {
   )[0];
 
   it("Initializes the Whitelist", async () => {
+    // Check if whitelist was already initialized (e.g. by the tuktuk Schedule test)
+    const existingAccount = await provider.connection.getAccountInfo(whitelist);
+    if (existingAccount) {
+      console.log("\nWhitelist already initialized:", whitelist.toBase58());
+      return;
+    }
+
     const tx = await program.methods
       .initializeWhitelist()
       .accountsPartial({
