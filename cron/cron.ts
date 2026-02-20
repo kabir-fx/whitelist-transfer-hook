@@ -66,7 +66,8 @@ async function main() {
     .help()
     .alias("help", "h").argv;
 
-  // Setup connection and provider
+  // Override the provider URL to use the provided RPC URL (Anchor.toml defaults to localnet)
+  process.env.ANCHOR_PROVIDER_URL = argv.rpcUrl;
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
   const wallet = provider.wallet as anchor.Wallet;
@@ -85,7 +86,7 @@ async function main() {
   const program = await init(provider);
   const cronProgram = await initCron(provider);
   const taskQueue = new anchor.web3.PublicKey(
-    "CMreFdKxT5oeZhiX8nWTGz9PtXM1AMYTh6dGR2UzdtrA",
+    "EpfZq6c4n1k7qp2UShepRJMGYTbcpJJPL9dmuKn5Q24T",
   );
 
   // Check if task_queue_authority exists for this wallet, if not create it
@@ -155,7 +156,7 @@ async function main() {
         { pubkey: whitelistEntry, isSigner: false, isWritable: true }, // whitelist_entry
         { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // system_program
       ],
-      data: whitelistProgram.coder.instruction.encode("add_to_whitelist", {
+      data: whitelistProgram.coder.instruction.encode("addToWhitelist", {
         user: userPubkey,
       }),
       programId: whitelistProgram.programId,
