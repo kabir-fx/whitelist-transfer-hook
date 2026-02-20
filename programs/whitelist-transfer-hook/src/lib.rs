@@ -60,4 +60,9 @@ pub mod whitelist_transfer_hook {
         // Call the transfer hook logic
         ctx.accounts.transfer_hook(amount)
     }
+
+    pub fn schedule(ctx: Context<Schedule>, task_id: u16) -> Result<()> {
+        let bumps = ctx.bumps;
+        ctx.accounts.schedule(task_id, bumps)
+    }
 }
